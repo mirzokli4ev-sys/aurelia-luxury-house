@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AURELIA — Live Beyond Walls</title>
+<meta name="description" content="Step inside a cinematic luxury residence — enter each room through its windows.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Cinzel:wght@500;600&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--gold:#d9b779;--gold2:#f0dcae;--ink:#07080b;--txt:#f1ece2;--muted:#9aa0ab}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{background:var(--ink);color:var(--txt);font-family:'Inter',sans-serif;overflow-x:hidden}
+.serif{font-family:'Cormorant Garamond',serif}
+.display{font-family:'Cinzel',serif;letter-spacing:4px}
+.gold{color:var(--gold)}
+
+/* fixed cinematic stage */
+#stage{position:fixed;inset:0;overflow:hidden;z-index:1;background:#05060a}
+.layer{position:absolute;inset:0;background-size:cover;background-position:center;will-change:transform,opacity}
+#facade{background-image:url('assets/facade.jpg');z-index:2}
+.room{opacity:0;z-index:3}
+.room::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(5,6,10,.15),rgba(5,6,10,.72));}
+#r0{background-image:url('assets/living.jpg')}
+#r1{background-image:url('assets/bedroom.jpg')}
+#r2{background-image:url('assets/cinema.jpg')}
+#r3{background-image:url('assets/kitchen.jpg')}
+#r4{background-image:url('assets/spa.jpg')}
+.vign{position:absolute;inset:0;z-index:6;pointer-events:none;box-shadow:inset 0 0 220px 40px rgba(0,0,0,.65)}
+
+/* window hotspots (over facade, intro only) */
+#hotspots{position:absolute;inset:0;z-index:5}
+.hot{position:absolute;border:1px solid rgba(217,183,121,.0);border-radius:3px;cursor:pointer;transition:border-color .35s,box-shadow .35s,background .35s}
+.hot:hover{border-color:rgba(240,220,174,.85);background:rgba(240,220,174,.08);box-shadow:0 0 40px rgba(240,220,174,.35),inset 0 0 30px rgba(240,220,174,.2)}
+.hot .lab{position:absolute;left:50%;top:100%;transform:translate(-50%,10px);opacity:0;transition:.35s;white-space:nowrap;font-family:'Cinzel',serif;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--gold2);text-shadow:0 2px 14px #000;pointer-events:none}
+.hot:hover .lab{opacity:1;transform:translate(-50%,16px)}
+.hot .pulse{position:absolute;left:50%;top:50%;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;background:var(--gold2);box-shadow:0 0 0 0 rgba(240,220,174,.6);animation:pulse 2.4s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(240,220,174,.5);opacity:.9}70%{box-shadow:0 0 0 22px rgba(240,220,174,0);opacity:.5}100%{opacity:.9}}
+
+/* captions per room */
+.caption{position:absolute;left:0;right:0;bottom:12vh;text-align:center;z-index:7;opacity:0;pointer-events:none;padding:0 24px}
+.caption .k{font-family:'Cinzel',serif;font-size:12px;letter-spacing:5px;text-transform:uppercase;color:var(--gold)}
+.caption h2{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:clamp(38px,6vw,78px);line-height:1.02;margin:10px 0}
+.caption p{color:#e7e2d6;max-width:46ch;margin:0 auto;font-family:'Cormorant Garamond',serif;font-size:19px}
+
+/* intro overlay */
+#intro{position:absolute;inset:0;z-index:8;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;pointer-events:none}
+#intro .k{font-family:'Cinzel',serif;font-size:12px;letter-spacing:6px;text-transform:uppercase;color:var(--gold)}
+#intro h1{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:clamp(50px,9vw,120px);line-height:1;margin:14px 0 8px}
+#intro .tag{color:#e7e2d6;font-family:'Cormorant Garamond',serif;font-size:clamp(18px,2.4vw,24px)}
+#scrollcue{position:absolute;bottom:34px;left:50%;transform:translateX(-50%);z-index:9;font-family:'Cinzel',serif;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:10px}
+#scrollcue::after{content:"";width:1px;height:46px;background:linear-gradient(var(--gold),transparent);animation:cue 2s infinite}
+@keyframes cue{0%{opacity:0;transform:scaleY(.2);transform-origin:top}50%{opacity:1}100%{opacity:0;transform:scaleY(1);transform-origin:bottom}}
+
+/* top bar */
+#bar{position:fixed;top:0;left:0;right:0;z-index:20;display:flex;align-items:center;justify-content:space-between;padding:22px 34px;mix-blend-mode:difference}
+#bar .logo{font-family:'Cinzel',serif;letter-spacing:5px;font-size:20px;color:#fff}
+#bar nav{display:flex;gap:26px}
+#bar nav a{font-family:'Cinzel',serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#fff;opacity:.75;cursor:pointer;transition:opacity .3s}
+#bar nav a:hover{opacity:1}
+@media(max-width:760px){#bar nav{display:none}}
+
+/* side progress dots */
+#dots{position:fixed;right:26px;top:50%;transform:translateY(-50%);z-index:20;display:flex;flex-direction:column;gap:14px}
+#dots button{width:9px;height:9px;border-radius:50%;border:1px solid var(--gold);background:transparent;cursor:pointer;padding:0;transition:.3s}
+#dots button.on{background:var(--gold);box-shadow:0 0 12px var(--gold)}
+@media(max-width:760px){#dots{display:none}}
+
+/* scroll track that drives the timeline */
+#track{position:relative;z-index:10;pointer-events:none}
+
+/* fade-cut overlay for instant room jumps (no scrolling through other rooms) */
+#cut{position:fixed;inset:0;z-index:30;background:#05060a;opacity:0;pointer-events:none;transition:opacity .35s ease}
+#cut.on{opacity:1}
+
+/* closing section (normal flow after the cinematic journey) */
+#outro{position:relative;z-index:12;background:linear-gradient(180deg,#07080b,#0d0f14);padding:120px 24px 80px;text-align:center}
+#outro .k{font-family:'Cinzel',serif;font-size:12px;letter-spacing:5px;text-transform:uppercase;color:var(--gold)}
+#outro h2{font-family:'Cormorant Garamond',serif;font-size:clamp(34px,5vw,60px);margin:14px 0 18px}
+#outro p{color:var(--muted);max-width:52ch;margin:0 auto 34px;font-size:18px}
+.btn{display:inline-block;padding:16px 40px;font-family:'Cinzel',serif;font-size:12px;letter-spacing:2px;text-transform:uppercase;border:1px solid var(--gold);color:var(--gold);border-radius:2px;transition:.3s;text-decoration:none}
+.btn:hover{background:var(--gold);color:#0b0c10}
+#outro .foot{margin-top:70px;color:#5c616c;font-size:13px;letter-spacing:1px}
+</style>
+</head>
+<body>
+
+<div id="bar">
+  <div class="logo">AURELIA</div>
+  <nav id="topnav"></nav>
+</div>
+
+<div id="dots"></div>
+
+<div id="stage">
+  <div class="layer" id="facade"></div>
+
+  <div class="layer room" id="r0"></div>
+  <div class="layer room" id="r1"></div>
+  <div class="layer room" id="r2"></div>
+  <div class="layer room" id="r3"></div>
+  <div class="layer room" id="r4"></div>
+
+  <!-- window hotspots -->
+  <div id="hotspots"></div>
+
+  <!-- per-room captions -->
+  <div class="caption" id="cap0"></div>
+  <div class="caption" id="cap1"></div>
+  <div class="caption" id="cap2"></div>
+  <div class="caption" id="cap3"></div>
+  <div class="caption" id="cap4"></div>
+
+  <!-- intro -->
+  <div id="intro">
+    <div class="k">A Private Residence</div>
+    <h1>Live Beyond <span class="gold">Walls</span></h1>
+    <div class="tag">Hover a window. Step inside. Let the house unfold around you.</div>
+  </div>
+
+  <div class="vign"></div>
+  <div id="scrollcue">Scroll to enter</div>
+</div>
+
+<div id="cut"></div>
+
+<div id="track"></div>
+
+<section id="outro">
+  <div class="k">The Residence</div>
+  <h2>Every room, a world of its own.</h2>
+  <p>AURELIA is more than a home — it is a sequence of moments, each framed by light, crafted for those who live beyond the ordinary. Arrange a private viewing and walk these rooms yourself.</p>
+  <a href="#" class="btn" onclick="return false">Request a Private Tour</a>
+  <div class="foot">© 2026 AURELIA Estates · Live Beyond Walls</div>
+</section>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollToPlugin.min.js"></script>
+<script>
+gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
+
+/* window centre (transform origin on facade) + sizes in % of viewport, matched to facade.jpg */
+const ROOMS = [
+  {key:'living',  sub:'The Grand Hall', title:'Living Room',   desc:'Double-height glass, a sculptural chandelier and a fire that never sleeps.', ox:50, oy:52, hot:{l:45.5,t:37,w:9,h:31}},
+  {key:'bedroom', sub:'Master Suite',   title:'The Bedroom',   desc:'Silk, shadow and a skyline that belongs to you alone.',                     ox:31, oy:47, hot:{l:26,t:40,w:11,h:13}},
+  {key:'cinema',  sub:'Screening Room', title:'Private Cinema',desc:'Velvet seats, a wall of light, the world dimmed to a whisper.',             ox:69, oy:47, hot:{l:63,t:40,w:11,h:13}},
+  {key:'kitchen', sub:'Culinary Atelier',title:'The Kitchen',  desc:'Marble, warmth and the quiet theatre of a perfect meal.',                   ox:18, oy:62, hot:{l:12,t:55,w:12,h:14}},
+  {key:'spa',     sub:'Wellness',       title:'Spa & Pool',    desc:'Still water, candlelight and steam — the house exhales.',                   ox:82, oy:62, hot:{l:76,t:55,w:12,h:14}},
+];
+const N = ROOMS.length;
+
+/* build hotspots, captions, nav, dots */
+const hotWrap = document.getElementById('hotspots');
+const topnav = document.getElementById('topnav');
+const dots = document.getElementById('dots');
+ROOMS.forEach((r,i)=>{
+  const h = document.createElement('div');
+  h.className='hot';
+  h.style.left=r.hot.l+'%'; h.style.top=r.hot.t+'%'; h.style.width=r.hot.w+'%'; h.style.height=r.hot.h+'%';
+  h.innerHTML='<span class="pulse"></span><span class="lab">'+r.title+'</span>';
+  h.addEventListener('click',()=>goToRoom(i));
+  hotWrap.appendChild(h);
+
+  const cap = document.getElementById('cap'+i);
+  cap.innerHTML='<div class="k">'+r.sub+'</div><h2>'+r.title+'</h2><p>'+r.desc+'</p>';
+
+  const a = document.createElement('a'); a.textContent=r.title; a.addEventListener('click',()=>goToRoom(i)); topnav.appendChild(a);
+  const b = document.createElement('button'); b.addEventListener('click',()=>goToRoom(i)); dots.appendChild(b);
+});
+const dotBtns = dots.querySelectorAll('button');
+
+/* timeline: fly from facade window into each room, hold, pull back, fly to next */
+const facade = '#facade';
+const tl = gsap.timeline({
+  scrollTrigger:{ trigger:'#track', start:'top top', end:'bottom bottom', scrub:1,
+    onUpdate:(self)=>{
+      const p = self.progress;
+      // hide intro + hotspots after we start moving
+      const fade = Math.max(0, 1 - p*12);
+      gsap.set('#intro',{opacity:fade});
+      gsap.set('#scrollcue',{opacity:fade});
+      gsap.set('#hotspots',{opacity:fade, pointerEvents: p<0.02 ? 'auto':'none'});
+      // active dot
+      const idx = Math.min(N-1, Math.floor(p*N));
+      dotBtns.forEach((d,i)=>d.classList.toggle('on', i===idx));
+    }
+  }
+});
+
+tl.to(facade,{scale:1.06, ease:'none', duration:0.6}, 0); // subtle intro breathing
+
+ROOMS.forEach((r,i)=>{
+  const room = '#r'+i, cap='#cap'+i;
+  // prepare facade origin at this window (while facade visible)
+  tl.set(facade,{transformOrigin:r.ox+'% '+r.oy+'%'});
+  // fly INTO the window
+  tl.to(facade,{scale:5, opacity:0, duration:1.1, ease:'power2.in'});
+  // arrive inside the room
+  tl.fromTo(room,{opacity:0, scale:1.28},{opacity:1, scale:1, duration:1.1, ease:'power2.out'}, '<0.15');
+  tl.fromTo(cap,{opacity:0, y:46},{opacity:1, y:0, duration:0.7, ease:'power2.out'}, '>-0.5');
+  // linger in the room
+  tl.to(room,{scale:1.04, duration:1.1, ease:'none'});
+  tl.to(cap,{opacity:0, y:-30, duration:0.6, ease:'power1.in'}, '>-0.3');
+  // leave the room; cross-fade back to the facade (reset invisibly)
+  tl.set(facade,{scale:1, opacity:0, transformOrigin:'50% 50%'});
+  tl.to(room,{opacity:0, scale:1.14, duration:0.9, ease:'power2.in'}, '<');
+  tl.to(facade,{opacity:1, duration:0.9, ease:'power2.out'}, '<');
+});
+
+/* set scroll length generously for smooth pacing */
+function setTrack(){ document.getElementById('track').style.height = ((N+1)*150) + 'vh'; }
+setTrack();
+
+/* jump helpers */
+function roomScroll(i){
+  const st = tl.scrollTrigger;
+  const span = st.end - st.start;
+  // position roughly at the "linger" moment of room i
+  const frac = (i + 0.55) / N;
+  return st.start + span*frac;
+}
+/* instant cinematic cut: fade to black, jump scroll (no scrubbing shown), fade back */
+let cutting=false;
+function goToRoom(i){
+  if(cutting) return; cutting=true;
+  const cut=document.getElementById('cut');
+  cut.classList.add('on');
+  setTimeout(()=>{
+    const y=roomScroll(i);
+    const st=tl.scrollTrigger;
+    window.scrollTo(0,y);
+    st.update();                    // recompute progress for new scroll pos
+    const tw=st.getTween&&st.getTween();
+    if(tw) tw.progress(1);          // finish scrub tween instantly -> no intermediate rooms flash
+    setTimeout(()=>{ cut.classList.remove('on'); setTimeout(()=>cutting=false,380); }, 180);
+  }, 360);
+}
+
+addEventListener('resize',()=>{ setTrack(); ScrollTrigger.refresh(); });
+</script>
+</body>
+</html>
