@@ -30,7 +30,7 @@ html,body{background:var(--ink);color:var(--txt);font-family:'Inter',sans-serif;
 
 /* window hotspots (over facade, intro only) */
 #hotspots{position:absolute;inset:0;z-index:5}
-.hot{position:absolute;border:1px solid rgba(217,183,121,.0);border-radius:3px;cursor:pointer;transition:border-color .35s,box-shadow .35s,background .35s}
+.hot{position:absolute;border:1px solid rgba(217,183,121,.0);border-radius:3px;cursor:pointer;transition:border-color .35s,box-shadow .35s,background .35s;background:transparent;padding:0;font:inherit;color:inherit}
 .hot:hover{border-color:rgba(240,220,174,.85);background:rgba(240,220,174,.08);box-shadow:0 0 40px rgba(240,220,174,.35),inset 0 0 30px rgba(240,220,174,.2)}
 .hot .lab{position:absolute;left:50%;top:100%;transform:translate(-50%,10px);opacity:0;transition:.35s;white-space:nowrap;font-family:'Cinzel',serif;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--gold2);text-shadow:0 2px 14px #000;pointer-events:none}
 .hot:hover .lab{opacity:1;transform:translate(-50%,16px)}
@@ -53,17 +53,29 @@ html,body{background:var(--ink);color:var(--txt);font-family:'Inter',sans-serif;
 @keyframes cue{0%{opacity:0;transform:scaleY(.2);transform-origin:top}50%{opacity:1}100%{opacity:0;transform:scaleY(1);transform-origin:bottom}}
 
 /* top bar */
-#bar{position:fixed;top:0;left:0;right:0;z-index:20;display:flex;align-items:center;justify-content:space-between;padding:22px 34px;mix-blend-mode:difference}
+#bar{position:fixed;top:0;left:0;right:0;z-index:20;display:flex;align-items:center;justify-content:space-between;padding:22px 34px;background:linear-gradient(180deg,rgba(5,6,10,.55),rgba(5,6,10,0));text-shadow:0 2px 12px rgba(0,0,0,.7)}
 #bar .logo{font-family:'Cinzel',serif;letter-spacing:5px;font-size:20px;color:#fff}
 #bar nav{display:flex;gap:26px}
-#bar nav a{font-family:'Cinzel',serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#fff;opacity:.75;cursor:pointer;transition:opacity .3s}
-#bar nav a:hover{opacity:1}
+#bar nav button{font-family:'Cinzel',serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#fff;opacity:.8;cursor:pointer;transition:opacity .3s;background:none;border:none;padding:6px 2px}
+#bar nav button:hover{opacity:1}
 @media(max-width:760px){#bar nav{display:none}}
 
 /* side progress dots */
 #dots{position:fixed;right:26px;top:50%;transform:translateY(-50%);z-index:20;display:flex;flex-direction:column;gap:14px}
-#dots button{width:9px;height:9px;border-radius:50%;border:1px solid var(--gold);background:transparent;cursor:pointer;padding:0;transition:.3s}
-#dots button.on{background:var(--gold);box-shadow:0 0 12px var(--gold)}
+#dots button{width:28px;height:28px;border:none;background:transparent;cursor:pointer;padding:0;transition:.3s;display:flex;align-items:center;justify-content:center}
+#dots button::before{content:"";width:9px;height:9px;border-radius:50%;border:1px solid var(--gold);transition:.3s}
+#dots button.on::before{background:var(--gold);box-shadow:0 0 12px var(--gold)}
+
+/* visible keyboard focus everywhere */
+a:focus-visible,button:focus-visible,.hot:focus-visible{outline:2px solid var(--gold2);outline-offset:3px;border-radius:3px}
+.hot:focus-visible{border-color:rgba(240,220,174,.85);box-shadow:0 0 40px rgba(240,220,174,.35),inset 0 0 30px rgba(240,220,174,.2)}
+.hot:focus-visible .lab{opacity:1;transform:translate(-50%,16px)}
+
+/* respect reduced motion */
+@media(prefers-reduced-motion:reduce){
+  *{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+  .room{opacity:1}
+}
 @media(max-width:760px){#dots{display:none}}
 
 /* scroll track that drives the timeline */
@@ -87,12 +99,12 @@ html,body{background:var(--ink);color:var(--txt);font-family:'Inter',sans-serif;
 
 <div id="bar">
   <div class="logo">AURELIA</div>
-  <nav id="topnav"></nav>
+  <nav id="topnav" aria-label="Rooms"></nav>
 </div>
 
 <div id="dots"></div>
 
-<div id="stage">
+<main id="stage" aria-label="Interactive residence tour">
   <div class="layer" id="facade"></div>
 
   <div class="layer room" id="r0"></div>
@@ -120,7 +132,7 @@ html,body{background:var(--ink);color:var(--txt);font-family:'Inter',sans-serif;
 
   <div class="vign"></div>
   <div id="scrollcue">Scroll to enter</div>
-</div>
+</main>
 
 <div id="cut"></div>
 
@@ -155,8 +167,9 @@ const hotWrap = document.getElementById('hotspots');
 const topnav = document.getElementById('topnav');
 const dots = document.getElementById('dots');
 ROOMS.forEach((r,i)=>{
-  const h = document.createElement('div');
-  h.className='hot';
+  const h = document.createElement('button');
+  h.className='hot'; h.type='button';
+  h.setAttribute('aria-label','Enter the '+r.title);
   h.style.left=r.hot.l+'%'; h.style.top=r.hot.t+'%'; h.style.width=r.hot.w+'%'; h.style.height=r.hot.h+'%';
   h.innerHTML='<span class="pulse"></span><span class="lab">'+r.title+'</span>';
   h.addEventListener('click',()=>goToRoom(i));
@@ -165,8 +178,13 @@ ROOMS.forEach((r,i)=>{
   const cap = document.getElementById('cap'+i);
   cap.innerHTML='<div class="k">'+r.sub+'</div><h2>'+r.title+'</h2><p>'+r.desc+'</p>';
 
-  const a = document.createElement('a'); a.textContent=r.title; a.addEventListener('click',()=>goToRoom(i)); topnav.appendChild(a);
-  const b = document.createElement('button'); b.addEventListener('click',()=>goToRoom(i)); dots.appendChild(b);
+  const a = document.createElement('button'); a.type='button'; a.textContent=r.title;
+  a.setAttribute('aria-label','Go to '+r.title);
+  a.addEventListener('click',()=>goToRoom(i)); topnav.appendChild(a);
+
+  const b = document.createElement('button'); b.type='button';
+  b.setAttribute('aria-label','Go to '+r.title);
+  b.addEventListener('click',()=>goToRoom(i)); dots.appendChild(b);
 });
 const dotBtns = dots.querySelectorAll('button');
 
